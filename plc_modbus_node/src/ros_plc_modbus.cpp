@@ -113,7 +113,7 @@ plc_modbus_manager::plc_modbus_manager() {
 }
 
 void plc_modbus_manager::regs_callBack(const std_msgs::UInt16MultiArray::ConstPtr &regs_data) {
-    if (regs_data->data.size() != regs_addr.size()) {
+    /*if (regs_data->data.size() != regs_addr.size()) {
         ROS_ERROR("%d registers to write but only %d given!", regs_addr.size(), regs_data->data.size());
         return;
     }
@@ -126,11 +126,27 @@ void plc_modbus_manager::regs_callBack(const std_msgs::UInt16MultiArray::ConstPt
         } else {
             ROS_INFO("Modbus register write at addr:%d with value:%u", regs_addr.at(i), regs_data->data.at(i));
         }
+    }*/
+
+    if(regs_data->data.size() < 2){
+        ROS_ERROR("You need to pass index and value of the register!");
+        return;
+    }else if(regs_data->data.at(0) >= regs_addr.size()){
+        ROS_ERROR("%d register index to write but only %d registers exists!", regs_data->data[0], regs_addr.size());
+        return;
+    }else{
+        uint16_t temp[1] = {regs_data->data.at(1)};
+        if (modbus_write_registers(plc, regs_addr.at(regs_data->data.at(0)), 1, temp) == -1) {
+            ROS_ERROR("Modbus reg write failed at addr:%d with value:%u", regs_addr.at(regs_data->data.at(0)), regs_data->data.at(1));
+            ROS_ERROR("%s", modbus_strerror(errno));
+        } else {
+            ROS_INFO("Modbus register write at addr:%d with value:%u", regs_addr.at(regs_data->data.at(0)), regs_data->data.at(1));
+        }
     }
 }
 
 void plc_modbus_manager::coils_callBack(const std_msgs::ByteMultiArray::ConstPtr &coils_data) {
-    if (coils_data->data.size() != coils_addr.size()) {
+    /*if (coils_data->data.size() != coils_addr.size()) {
         ROS_ERROR("%d coils to write but %d given!", coils_addr.size(), coils_data->data.size());
         return;
     }
@@ -142,6 +158,22 @@ void plc_modbus_manager::coils_callBack(const std_msgs::ByteMultiArray::ConstPtr
             ROS_ERROR("%s", modbus_strerror(errno));
         } else {
             ROS_INFO("Modbus coil write at addr:%d with value:%u", coils_addr.at(i), coils_data->data.at(i));
+        }
+    }*/
+
+    if(coils_data->data.size() < 2){
+        ROS_ERROR("You need to pass index and value of the coil!");
+        return;
+    }else if(coils_data->data.at(0) >= coils_addr.size()){
+        ROS_ERROR("%d coil index to write but only %d coils exists!", coils_data->data[0], coils_addr.size());
+        return;
+    }else{
+        uint8_t temp[1] = {coils_data->data.at(1)};
+        if (modbus_write_bits(plc, coils_addr.at(coils_data->data.at(0)), 1, temp) == -1) {
+            ROS_ERROR("Modbus bit write failed at addr:%d with value:%u", coils_addr.at(coils_data->data.at(0)), coils_data->data.at(1));
+            ROS_ERROR("%s", modbus_strerror(errno));
+        } else {
+            ROS_INFO("Modbus coil write at addr:%d with value:%u", coils_addr.at(coils_data->data.at(0)), coils_data->data.at(1));
         }
     }
 }
